@@ -1,0 +1,407 @@
+
+<style>
+  #over_map {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 99;
+  }
+</style>
+
+<ion-content padding style=" position: relative; ">
+
+  <div id="map_canvas" [hidden]="HideMapPage">
+
+    <ion-card [hidden]="HideMainCard">
+      <ion-card-header>
+        <div style="width:20%;float:left">
+          <p-tieredMenu #menu [model]="items" [popup]="true"></p-tieredMenu>
+          <button #btn type="button" pButton icon="pi pi-ellipsis-v" (click)="menu.toggle($event)"></button>
+        </div>
+
+        <div style="width:50%;display:inline-block">
+          <p style="text-align:center;font-size: large;font-weight: bold;"> Food Truck </p>
+        </div>
+
+      </ion-card-header>
+      <ion-card-content>
+
+        <ion-toolbar>
+          <ion-buttons end style="width:10%">
+            <button ion-button (click)="ResetLocation()" style="width:100%">
+              <img src="assets/imgs/refresh.png" />
+            </button>
+          </ion-buttons>
+
+          <ion-searchbar [(ngModel)]="autocomplete.input" id="search_address" (ionInput)="updateSearchResults()" placeholder="search">
+          </ion-searchbar>
+
+        </ion-toolbar>
+        <ion-list [hidden]="autocompleteItems.length == 0">
+          <ion-item *ngFor="let item of autocompleteItems" Tappable (click)="selectSearchResult(item)">
+            {{ item.description }}
+          </ion-item>
+        </ion-list>
+        <div id="parkAtmUnderSearch" [hidden]="autocompleteItems.length >0">
+
+          <ion-item style=" width:49%; background-color:#dcf0f5;float:left;margin-right:1px; padding-left: 10%; max-height:10px">
+            <img item-start src="assets/imgs/Parking.png" style="float:left;width:25%;margin-left:10px;" />
+            <ion-label>
+              <p style="color:#2e8ea8;"> Parking </p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item style=" width:49%;background-color:#d4f1e2; display: inline-block;margin-left:1px; max-height:10px">
+            <img item-start src="assets/imgs/ATM.png" style="float:left;width:23%;margin: 1px 8px 9px 12px !important" />
+            <ion-label>
+              <p style="color:#37a76f;"> ATM </p>
+            </ion-label>
+
+          </ion-item>
+        </div>
+
+        <!--<div  [hidden]="autocompleteItems.length >0">
+                <div style="text-align:center; width:49%; background-color:#dcf0f5;
+      float:left;margin-right:1px; padding-left: 10%; border-radius: 0 0 0px 10px;">
+                  <img src="assets/imgs/Parking.png" style="float:left;width:29%" />
+                  <p style="color:#2e8ea8; display:inline-block;padding-top:10px"> Parking </p>
+                </div>
+                <div style="text-align:center; width:49%;background-color:#d4f1e2; display: inline-block; padding-left:10%;margin-left:1px;   border-radius: 0 0 10px 0px;">
+                  <img src="assets/imgs/ATM.png" style="float:left;width:32%" />
+                  <p style="color:#37a76f; display:inline-block;padding-top:10px"> ATM </p>
+                </div>
+              </div>-->
+      </ion-card-content>
+    </ion-card>
+    <ion-card id="CardDetails" [hidden]="HideDetailsCard">
+      <ion-card-header>
+        <button style="background-color:transparent;float:left" (click)="BackToMainCard()">
+          <ion-icon name="arrow-round-back"></ion-icon>
+        </button>
+        <p style="display:inline-block;font-size: large;font-weight: bold;"> Details </p>
+      </ion-card-header>
+      <ion-card-content>
+        <div style="margin-left:5%">
+          <ion-item style="background-color:#DCDCDC;width:90%;padding-left:8px;border-radius:10px;" text-wrap>
+            <img src="assets/imgs/plackPointer.png" item-start style="width:7%" />
+            <ion-label style="width:50%">
+              {{ DetailsAddress }}
+            </ion-label>
+            <!--<img src="assets/imgs/Navigation.png" item-end style="width:13%"  />-->
+            <!--<button ion-button (click)="ZoomPlace()"  item-end style="width:13%;background-color:transparent;padding:0px !important">
+            <img src="assets/imgs/Navigation.png" />
+          </button>-->
+            <a href={{_hrefNavigation}} item-end style="width:15%">  <img src="assets/imgs/Navigation.png" /> </a>
+          </ion-item>
+        </div>
+        <br />
+        <div style="margin-left:5%">
+          <ion-item style="width:90%;padding-left:8px;border-radius:10px; max-height: 10px;" [ngStyle]="DivDetailsStyle" text-wrap>
+            <!--<div style="float:left;width:20%">-->
+            <img src='{{DivDetailsSrc}}' item-start [ngStyle]="ImageStyleIncaseUser" style="width:10%;" />
+            <!--</div>-->
+            <ion-label [ngStyle]="ParagraphDetailsStyle" style="width:50%;">
+              <p [ngStyle]="ParagraphDetailsStyle">
+                {{DivDetailsPargraph}}
+              </p>
+            </ion-label>
+
+            <ion-label [ngStyle]="ParagraphDetailsStyle" style="width:30%;text-align:right">
+              <p [ngStyle]="ParagraphDetailsStyle"> {{PlaceCheckInCount}}&nbsp; Check-in </p>
+            </ion-label>
+
+            <!--<div style="width:39%;display:inline-block;">
+
+
+
+          </div>
+          <div style="width:39%;display:inline-block;">
+            <p [ngStyle]="ParagraphDetailsStyle" style="width:100%;"> {{PlaceCheckInCount}}&nbsp; Check in</p>
+          </div>-->
+          </ion-item>
+        </div>
+        <br />
+        <!--<div style="text-align: center; width: 80%;margin-left: 10%;">
+        <ion-card style="background-color:#DCDCDC">
+          <div style="width:10%; float:left">
+            <img src="assets/imgs/plackPointer.png" />
+          </div>
+          <div style="width:60%; display:inline-block">
+            {{ DetailsAddress }}
+          </div>
+          <div style="width:20%;display:inline-block ">
+            <button ion-button (click)="ZoomPlace()" style="width:100%;background-color:transparent;padding:0px !important">
+              <img src="assets/imgs/Navigation.png" />
+            </button>
+          </div>
+        </ion-card>
+      </div>-->
+        <!--<div style="text-align: center; width: 80%;margin-left: 10%;">
+        <div [ngStyle]="DivDetailsStyle" style="text-align:center; float:left; margin-top: 6%;margin-bottom: 6%; ">
+          <div style="float:left;width:20%">
+            <img src='{{DivDetailsSrc}}' [ngStyle]="ImageStyleIncaseUser" style="width:100%; height: 30px;" />
+          </div>
+          <div style="width:39%;display:inline-block;">
+            <p [ngStyle]="ParagraphDetailsStyle" style="width:100%;"> {{DivDetailsPargraph}} </p>
+
+          </div>
+          <div style="width:39%;display:inline-block;">
+            <p [ngStyle]="ParagraphDetailsStyle" style="width:100%;"> {{PlaceCheckInCount}}&nbsp; Check in</p>
+          </div>
+        </div>
+      </div>-->
+
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card id="CardCheckSuccess" [hidden]="HideCheckSuccessCard">
+      <ion-card-header>
+        <button style="background-color:transparent;float:left" (click)="BackToMainCard()">
+          <ion-icon name="arrow-round-back"></ion-icon>
+        </button>
+        <p style="display:inline-block;font-size: large;font-weight: bold;"> Back TO Home </p>
+      </ion-card-header>
+      <ion-card-content>
+        <br />
+        <img src="assets/imgs/blackCheckIn.png" style="width:10%;float:left;margin-bottom: 10%;margin-left: 10%;margin-right: 5%;" />
+        <p style="width:50%; display:inline-block; margin: 10px 0px 0px 0px;"> Checked in Successfully </p>
+      </ion-card-content>
+    </ion-card>
+
+    <!--  Reset Location  -->
+    <!--<ion-fab bottom right>
+    <button color="light" ion-fab (click)="somefunction()">
+      <ion-icon ios="ios-locate-outline" md="md-locate"></ion-icon>
+    </button>
+  </ion-fab>-->
+
+    <ion-fab bottom left>
+      <button ion-fab (click)="ResetLocation($event)" style="background-color:transparent">
+        <img src="assets/imgs/ResetLocation.png" />
+      </button>
+
+    </ion-fab>
+    <ion-fab bottom center>
+      <button  ion-fab (click)="CheckIn($event)" style="background-color:#bbb487;">
+        <img src="assets/imgs/pointer.png" style="height:50%"/>
+      </button>
+    </ion-fab>
+
+
+    <!--<button ion-button (click)="CheckIn($event)" style="background-color:#bbb487;
+  border-radius: 50%; margin-top: 100%;margin-left:15%;width:20% ;">
+    <img src="assets/imgs/pointer.png" style="width:100%;height:60%" />
+  </button>-->
+
+  </div>
+  <!--<div id="over_map" [hidden]="HideDetailsCard">
+    <ion-card id="CardDetails" [hidden]="HideDetailsCard">
+      <ion-card-header>
+        <button style="background-color:transparent;float:left" (click)="BackToMainCard()">
+          <ion-icon name="arrow-round-back"></ion-icon>
+        </button>
+        <p style="display:inline-block"> Details </p>
+      </ion-card-header>
+      <ion-card-content>
+
+        <div style="text-align: center; width: 80%;margin-left: 10%;">
+          <ion-card style="background-color:#DCDCDC">
+            <div style="width:10%; float:left">
+              <img src="assets/imgs/plackPointer.png" />
+            </div>
+            <div style="width:60%; display:inline-block">
+              {{ DetailsAddress }}
+            </div>
+            <div style="width:20%;display:inline-block ">
+              <button ion-button (click)="ZoomPlace()" style="width:100%;background-color:transparent;padding:0px !important">
+                <img src="assets/imgs/Navigation.png" />
+              </button>
+            </div>
+          </ion-card>
+        </div>
+
+        <div style="text-align: center; width: 80%;margin-left: 10%;">
+          <div [ngStyle]="DivDetailsStyle" style="text-align:center; float:left; margin-top: 6%;margin-bottom: 6%; ">
+            <div style="float:left;width:20%">
+              <img src='{{DivDetailsSrc}}' [ngStyle]="ImageStyleIncaseUser" style="width:100%; height: 30px;" />
+            </div>
+            <div style="width:39%;display:inline-block;">
+              <p [ngStyle]="ParagraphDetailsStyle" style="width:100%;"> {{DivDetailsPargraph}} </p>
+
+            </div>
+            <div style="width:39%;display:inline-block;">
+              <p [ngStyle]="ParagraphDetailsStyle" style="width:100%;"> {{PlaceCheckInCount}}&nbsp; Check in</p>
+            </div>
+          </div>
+        </div>
+
+      </ion-card-content>
+    </ion-card>
+  </div>-->
+
+  <ion-card style="width:100% ; height:100%;padding:4%" [hidden]="HideCheckInPage" id="CheckInPage" text-wrap>
+    <ion-card-header>
+      <button style="background-color:transparent;float:left" (click)="BackToMapPage()">
+        <ion-icon name="arrow-round-back"></ion-icon>
+      </button>
+      <p style="display:inline-block;font-size: large;font-weight: bold;">Check in</p>
+    </ion-card-header>
+    <ion-card-content>
+
+      <ion-item style="background-color:#DCDCDC;width:90%" text-wrap>
+        <img src="assets/imgs/plackPointer.png" item-start style="width:8%" />
+        <ion-label>
+          {{ CurrentAddress }}
+        </ion-label>
+      </ion-item>
+
+      <br />
+      <br />
+      <h3>Type Of Interaction</h3>
+      <p-dropdown [options]="TypeOfInteraction" [(ngModel)]="InteractionId"
+                  placeholder="select the type" (onChange)="changeInteraction($event)">
+        <ng-template let-item pTemplate="selectedItem" >
+          <ion-icon name="add"  style="width:16px;vertical-align:middle"  *ngIf="item.value==4" ></ion-icon>
+          <span style="vertical-align:middle; margin-left: .5em">{{item.label}}</span>
+        </ng-template>
+
+
+        <ng-template let-car pTemplate="item">
+          <div class="ui-helper-clearfix" style="position: relative;height:25px;" *ngIf="car.value != 4">
+            <div style="font-size:14px;margin-top:4px">{{car.label}}</div>
+          </div>
+          <div *ngIf="car.value==4" class="ui-helper-clearfix" style="position: relative;height:25px;">
+            <ion-icon name="add" style="width:10%;top:1px;left:5px;float:left"></ion-icon>
+            <div style="font-size:14px;margin-top:4px;display: inline-block; width: 60%;margin-right: 30%;">{{car.label}}</div>
+          </div>
+        </ng-template>
+      </p-dropdown>
+
+
+      <br />
+      <br />
+      <div *ngIf="InteractionId==1  || InteractionId==2 || InteractionId==3 ">
+        <h3>Choose The nearby Check in</h3>
+        <p-dropdown [options]="NearByCheckIn" [(ngModel)]="PlaceId"
+                    placeholder="select the near by" (onChange)="changePlace($event)">
+
+          <ng-template let-item pTemplate="item">
+            <!--<div *ngIf="item.type=='Park'" class="ui-helper-clearfix" style="position: relative;background-color:#dcf0f5">
+    <img src="assets/imgs/Parking.png" style="width:13%;vertical-align:middle;float:left" />
+    <div style="width:50%; font-size:14px;margin-top:1px;display:inline-block;color:#2e8ea8">{{item.label}}</div>
+    <button style="width:20%;display:inline-block;float:right;border-radius:0%;background-color:transparent" (click)="DetailView(item)"> view </button>
+  </div>-->
+
+            <ion-item *ngIf="item.type=='Park'" class="ui-helper-clearfix" style="position: relative;background-color:#d4f1e2">
+              <img src="assets/imgs/Parking.png" item-start style="width:13%;float:left" />
+              <ion-label style="width:67%;font-size:14px;margin-top:1px;display:inline-block">
+                <p style="color:#2e8ea8"> {{item.label}} </p>
+              </ion-label>
+              <button item-end style="width:23%;border-radius:0%;background-color:transparent" (click)="DetailView(item)"> view </button>
+            </ion-item>
+
+            <ion-item *ngIf="item.type=='ATM'" class="ui-helper-clearfix" style="position: relative;background-color:#d4f1e2">
+              <img src="assets/imgs/ATM.png" item-start style="width:13%;float:left" />
+              <ion-label style="width:67%;font-size:14px;margin-top:1px;display:inline-block">
+                <p style="color:#37a76f"> {{item.label}} </p>
+              </ion-label>
+              <button item-end style="width:23%;border-radius:0%;background-color:transparent" (click)="DetailView(item)"> view </button>
+            </ion-item>
+
+            <ion-item *ngIf="item.type=='USERATM' || item.type=='USERPark'" class="ui-helper-clearfix" style="position: relative;background-color:#ffdac1">
+              <img src="assets/imgs/UserATM.png" item-start style="width:13%;float:left"  *ngIf="item.type=='USERATM'"/>
+              <img src="assets/imgs/UserPark.png" item-start style="width:13%;float:left" *ngIf="item.type=='USERPark'" />
+
+              <ion-label style="width:67%;font-size:14px;margin-top:1px;display:inline-block">
+                <p style="color:#ff6600"> {{item.label}} </p>
+              </ion-label>
+              <button item-end style="width:23%;border-radius:0%;background-color:transparent" (click)="DetailView(item)"> view </button>
+            </ion-item>
+
+
+            <!--<div *ngIf="item.type=='USERATM' || item.type=='USERPark'" class="ui-helper-clearfix" style="position: relative;background-color:#ffdac1">
+              <div *ngIf="item.type=='USERATM'">
+                <img src="assets/imgs/UserATM.png" style="width:13%;vertical-align:middle;float:left" />
+
+              </div>
+              <div *ngIf="item.type=='USERPark'">
+                <img src="assets/imgs/UserPark.png" style="width:13%;vertical-align:middle;float:left" />
+              </div>
+              <div style="width:50%;font-size:14px;margin-top:1px;display:inline-block;color:#ff6600">{{item.label}}</div>
+              <button style="width:20%;display:inline-block;float:right;border-radius:0%;background-color:transparent" (click)="DetailView(item)"> view </button>
+            </div>-->
+          </ng-template>
+        </p-dropdown>
+        <p *ngIf="placeIdRequire" style="color:red">This Field is Required</p>
+      </div>
+      <br />
+
+
+      <div *ngIf="InteractionId==4">
+        <h3>Choose The Point Type </h3>
+        <p-dropdown [options]="PointType" [(ngModel)]="PointTypeId"
+                    placeholder="select point type" optionLabel="label">
+
+        </p-dropdown>
+        <p *ngIf="PointTypeIdRequire" style="color:red">This Field is Required</p>
+      </div>
+
+
+      <br />
+      <!--<div *ngIf="InteractionId==4" style="margin-left:3%">
+        <h3> Comment</h3>
+        <textarea style="width:90%">
+
+        </textarea>
+      </div>-->
+      <br />
+      <div style="text-align:center">
+        <button style="background-color:#89814e; border-radius:13px; width:35%" (click)="SaveCheckIn()">
+          <img src="assets/imgs/whiteCheckIn.png" style="width:25% ; float:left" />
+          <p style="display:inline-block;width:60%;color: white;">  Check In </p>
+        </button>
+      </div>
+
+
+    </ion-card-content>
+  </ion-card>
+  <ion-card id="aboutPage" style="width:100% ; height:100%;padding:4%" [hidden]="HideAboutPage" text-wrap>
+    <ion-card-header>
+      <button style="background-color:transparent;float:left" (click)="BackToMapPage()">
+        <ion-icon name="arrow-round-back"></ion-icon>
+      </button>
+      <p style="display:inline-block;font-size: large;font-weight: bold;"> About The App </p>
+      <hr />
+    </ion-card-header>
+    <ion-card-content>
+      <div style="width:90%">
+        <p>
+          This is a simple application with basic features to search for the nearby parkings
+          or ATMs around the Kingdom of Saudi Arabia.
+        </p>
+        <br />
+        <p>
+          Moreover, the App allows public users to check-in and add new Parking/ATM.
+        </p>
+        <br />
+        <p>
+          For any request, please reach us via
+        </p>
+        <a href="https://www.yesser.gov.sa">data@yesser.gov.sa</a>
+      </div>
+      <div style="width:90%">
+        <img src="assets/imgs/yesserLogo.png" style="width:30% ; float:left;margin:10%" />
+        <img src="assets/imgs/foodLogo.png" style="width:28% ; display:inline-block;margin:10%" />
+      </div>
+      <div style="width:90%">
+        <p>
+          Developed by YESSER E-Government Program
+          DATA.GOV.SA All Rights Reserved 2019
+        </p>
+      </div>
+
+    </ion-card-content>
+  </ion-card>
+</ion-content>
+
+
